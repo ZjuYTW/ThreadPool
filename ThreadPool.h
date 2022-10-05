@@ -16,6 +16,7 @@ public:
     ThreadPool(size_t);
     template<class F, class... Args>
     auto enqueue(F&& f, Args&&... args);
+    void JoinAll();
     ~ThreadPool();
 private:
     // need to keep track of threads so we can join them
@@ -81,16 +82,20 @@ auto ThreadPool::enqueue(F&& f, Args&&... args)
     return res;
 }
 
-// the destructor joins all threads
-inline ThreadPool::~ThreadPool()
-{
+inline void ThreadPool::JoinAll(){
     {
         std::unique_lock<std::mutex> lock(queue_mutex);
         stop = true;
     }
     condition.notify_all();
     for(std::thread &worker: workers)
-        worker.join();
+        worker.join(); 
+}
+
+// the destructor joins all threads
+inline ThreadPool::~ThreadPool()
+{
+    JoinAll();
 }
 
 #endif
