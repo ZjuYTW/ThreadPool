@@ -88,14 +88,18 @@ inline void ThreadPool::JoinAll(){
         stop = true;
     }
     condition.notify_all();
-    for(std::thread &worker: workers)
-        worker.join(); 
+    for(std::thread &worker: workers){
+        if(worker.joinable())
+            worker.join();
+    }
 }
 
 // the destructor joins all threads
 inline ThreadPool::~ThreadPool()
 {
-    JoinAll();
+    // here we don't need a lock
+    if(!stop)
+        JoinAll();
 }
 
 #endif
